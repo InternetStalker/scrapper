@@ -1,0 +1,9 @@
+scrapper.egg-info/
+.vscode/
+build/
+dist/
+venv/
+
+*.html
+*.pyc
+*.csv
