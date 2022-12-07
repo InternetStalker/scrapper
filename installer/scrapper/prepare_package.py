@@ -30,7 +30,7 @@ class Package:
                 urls.append(item_url.replace(self.tree_url, self.raw_url).replace("blob/", ""))
 
             else: # url to folder
-                task = self.walk_github_tree(urljoin(self.tree_url, item_url))
+                task = asyncio.create_task(self.walk_github_tree(urljoin(self.tree_url, item_url)))
                 child_urls = await task
                 urls.extend(child_urls)
 
