@@ -30,8 +30,10 @@ class Package:
                 urls.append(item_url.replace(self.tree_url, self.raw_url).replace("blob/", ""))
 
             else: # url to folder
-                task = asyncio.create_task(self.walk_github_tree(urljoin(self.tree_url, item_url)))
-                child_urls = await task
+                child_urls = await asyncio.create_task(
+                    self.walk_github_tree(
+                        urljoin(self.tree_url, item_url))
+                    )
                 urls.extend(child_urls)
 
         return urls
@@ -62,8 +64,7 @@ class Package:
         async with aiohttp.ClientSession() as self.session:
             for name, method in Package.__dict__.items():
                 if name.startswith("prepare_"):
-                    task = asyncio.create_task(method(self))
-                    await task
+                    await asyncio.create_task(method(self))
 
             await self.create_logs()
 
@@ -84,24 +85,20 @@ class Package:
         service_path.mkdir()
 
         service_url = urljoin(self.tree_url, "/InternetStalker/scrapper/tree/main/scrapper/services")
-        task = asyncio.create_task(self.walk_github_tree(service_url))
-        urls = await task
+        urls = await asyncio.create_task(self.walk_github_tree(service_url))
 
         for url in urls:
-            task = asyncio.create_task(self.save_file(url))
-            await task
+            await asyncio.create_task(self.save_file(url))
 
     async def prepare_modules(self) -> None:
         modules_path = self.root_path / "modules"
         modules_path.mkdir()
 
         modules_url = urljoin(self.tree_url, "/InternetStalker/scrapper/tree/main/scrapper/modules")
-        task = asyncio.create_task(self.walk_github_tree(modules_url))
-        urls = await task
+        urls = await asyncio.create_task(self.walk_github_tree(modules_url))
 
         for url in urls:
-            task = asyncio.create_task(self.save_file(url))
-            await task
+            await asyncio.create_task(self.save_file(url))
 
     async def prepare_webdrivers(self) -> None:
         webdrivers_path = self.root_path / "webdrivers"
