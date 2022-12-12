@@ -3,7 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from urllib.parse import *
 from bs4 import BeautifulSoup
+from shutil import rmtree
 
+import os
+import sys
+import json
 import aiohttp
 import asyncio
 
@@ -70,8 +74,9 @@ class GithubUrl:
 
 class Package:
     "A class that prepares package for unpacking files."
-    def __init__(self, root_path: Path) -> None:
+    def __init__(self, root_path: Path, path_to_scrappers: Path) -> None:
         self.root_path = root_path
+        self.path_to_scrappers = path_to_scrappers
         self.tree_url = "https://github.com"
         self.raw_url = "https://raw.githubusercontent.com"
 
@@ -164,3 +169,24 @@ class Package:
     async def prepare_webdrivers(self) -> None:
         webdrivers_path = self.root_path / "webdrivers"
         webdrivers_path.mkdir()
+
+    async def prepare_scrappers(self) -> None:
+        if self.path_to_scrappers.exists():
+            if not list(self.path_to_scrappers.iterdir()) == []:
+                reply = input("Scrapper dirrectory contains something. Should it be cleaned? [y/n]: ")
+                if reply == "y":
+                    rmtree(self.path_to_scrappers)
+                    self.path_to_scrappers.mkdir()
+                else:
+                    sys.exit(1)
+
+        else:
+            self.path_to_scrappers.mkdir()
+        os.system(f"cd {self.path_to_scrappers}")
+        os.system("git init")
+
+        settings_path = self.root_path / "settings.json"
+        with open(settings_path, "w", encoding="utf-8") as file:
+            settings = json.loads(settings_path.read_text())
+            settings["path to scrappers"] = self.path_to_scrappers
+            json.dump(file, indent=4)
