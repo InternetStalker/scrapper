@@ -7,6 +7,67 @@ from bs4 import BeautifulSoup
 import aiohttp
 import asyncio
 
+class GithubUrl:
+    def __init__(self, url: str) -> None:
+        self.__url = url
+
+        url = urlparse(url)
+
+        if url.netloc == "github.com":
+            self.__parse_github_url(url)
+
+        elif url.netloc == "raw.githubusercontent.com":
+            self.__parse_raw_url(url)
+
+        else:
+            raise Exception(f"Invalid host: {url.netloc}")
+
+    @property
+    def author(self) -> str:
+        return self.__author
+
+    @property
+    def repo(self) -> str:
+        return self.__repo
+
+    @property
+    def path(self) -> list[str]:
+        return self.__path
+
+    @property
+    def brunch(self) -> str:
+        return self.__brunch
+
+    @property
+    def url(self) -> str:
+        return self.__url
+
+    def is_file(self) -> bool:
+        return self.__is_file
+
+    def is_folder(self) -> bool:
+        return not self.__is_file
+
+    def __truediv__(self, url: str) -> GithubUrl:
+        urljoin(self.__url, url)
+
+    def __parse_raw_url(self, url: ParseResult) -> None:
+        self.__is_file = True
+
+        self.__author, self.__repo, self.__brunch, self.__path = url.path.split("/")[1:]# [1:] because first is always ""
+
+    def __parse_github_url(self, url: ParseResult) -> None:
+        self.__author, self.__repo, *path = url.path.split("/")[1:]
+        if len(path) > 0:
+            if path[0] == "blob":
+                self.__is_file = False
+
+            self.__brunch, *self.__path = path[1:]# because first is blob or tree
+
+        else:
+            self.__brunch = "main"
+            self.__path = []
+
 class Package:
     "A class that prepares package for unpacking files."
     def __init__(self, root_path: Path) -> None:
