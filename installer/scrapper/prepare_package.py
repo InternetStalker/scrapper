@@ -53,7 +53,17 @@ class GithubUrl:
         return not self.__is_file
 
     def __truediv__(self, url: str) -> GithubUrl:
-        urljoin(self.__url, url)
+        if self.__is_file:
+            raise Exception("Can't join to file url.")
+
+        url = url.lstrip("/")
+        parsed_url = url.split("/")
+
+        if len(parsed_url) > 1:
+            return GithubUrl("https://github.com/" + url)
+
+        else:
+            return GithubUrl(self.url, url)
 
     def __parse_raw_url(self, url: ParseResult) -> None:
         self.__is_file = True
@@ -64,6 +74,9 @@ class GithubUrl:
         self.__author, self.__repo, *path = url.path.split("/")[1:]
         if len(path) > 0:
             if path[0] == "blob":
+                self.__is_file = True
+
+            else:
                 self.__is_file = False
 
             self.__brunch, *self.__path = path[1:]# because first is blob or tree
