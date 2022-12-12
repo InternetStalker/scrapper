@@ -44,7 +44,13 @@ class GithubUrl:
 
     @property
     def url(self) -> str:
-        return self.__url
+        if self.__is_file:
+            host = "raw.githubusercontent.com"
+
+        else:
+            host = "github.com"
+
+        return urlunparse("https", host, self.author, self.repo, self.brunch, *self.__path)
 
     def is_file(self) -> bool:
         return self.__is_file
