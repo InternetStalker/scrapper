@@ -13,8 +13,6 @@ import asyncio
 
 class GithubUrl:
     def __init__(self, url: str) -> None:
-        self.__url = url
-
         url = urlparse(url)
 
         if url.netloc == "github.com":
@@ -96,48 +94,42 @@ class Package:
     def __init__(self, root_path: Path, path_to_scrappers: Path) -> None:
         self.root_path = root_path
         self.path_to_scrappers = path_to_scrappers
-        self.tree_url = "https://github.com"
-        self.raw_url = "https://raw.githubusercontent.com"
+        self.service_url = "https://github.com/InternetStalker/scrapper/tree/main/scrapper/services"
+        self.modules_url = "https://github.com/InternetStalker/scrapper/tree/main/scrapper/modules"
 
-    async def walk_github_tree(self, url: str) -> list[str]:
+    async def walk_github_tree(self, url: GithubUrl) -> list[str]:
         urls = []
 
-        async with self.session.get(url) as response:
+        async with self.session.get(url.url) as response:
             src = await response.text()
 
         soup = BeautifulSoup(src, "lxml")
 
         items = soup.find_all("a", class_="js-navigation-open Link--primary")
         for item in items:
-            item_url = urljoin(self.tree_url, item.get("href"))
+            item_url: GithubUrl = url / item.get("href")
 
-            if "blob" in item_url: # it's url to file
-                urls.append(item_url.replace(self.tree_url, self.raw_url).replace("blob/", ""))
+            if item_url.is_file(): # it's url to file
+                urls.append(item_url)
 
             else: # url to folder
                 child_urls = await asyncio.create_task(
                     self.walk_github_tree(
-                        urljoin(self.tree_url, item_url))
+                        item_url.url)
                     )
                 urls.extend(child_urls)
 
         return urls
 
-    async def save_file(self, url: str) -> None:
+    async def save_file(self, url: GithubUrl) -> None:
         """Saves file from github. Checks if url is file. If not raises value error."""
-        if "blob" in url:
-            url = url.replace(self.tree_url, self.raw_url).replace("blob/", "")
-
-        elif not self.raw_url in url:
+        if not url.is_file():
             raise ValueError("Url argument must be url to file on github.")
 
-        async with self.session.get(url) as response:
+        async with self.session.get(url.url) as response:
             src = await response.text()
 
-        path = url.split("/")[7:]
-        *path, file_name = path
-
-        Path(self.root_path, *path, file_name).write_text(src, encoding="utf-8")
+        Path(self.root_path, *url.path).write_text(src, encoding="utf-8")
 
 
 
@@ -169,8 +161,7 @@ class Package:
         service_path = self.root_path / "services"
         service_path.mkdir()
 
-        service_url = urljoin(self.tree_url, "/InternetStalker/scrapper/tree/main/scrapper/services")
-        urls = await asyncio.create_task(self.walk_github_tree(service_url))
+        urls = await asyncio.create_task(self.walk_github_tree(self.service_url))
 
         for url in urls:
             await asyncio.create_task(self.save_file(url))
@@ -179,8 +170,7 @@ class Package:
         modules_path = self.root_path / "modules"
         modules_path.mkdir()
 
-        modules_url = urljoin(self.tree_url, "/InternetStalker/scrapper/tree/main/scrapper/modules")
-        urls = await asyncio.create_task(self.walk_github_tree(modules_url))
+        urls = await asyncio.create_task(self.walk_github_tree(self.modules_url))
 
         for url in urls:
             await asyncio.create_task(self.save_file(url))
