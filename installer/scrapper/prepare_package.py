@@ -8,7 +8,6 @@ from shutil import rmtree
 import os
 import sys
 import json
-import shutil
 import aiohttp
 import asyncio
 
@@ -95,8 +94,7 @@ class Package:
     def __init__(self, root_path: Path, path_to_scrappers: Path) -> None:
         self.root_path = root_path
         self.path_to_scrappers = path_to_scrappers
-        self.service_url = "https://github.com/InternetStalker/scrapper/tree/main/scrapper/services"
-        self.modules_url = "https://github.com/InternetStalker/scrapper/tree/main/scrapper/modules"
+        self.source_path = "https://github.com/InternetStalker/scrapper/tree/main/scrapper"
 
     async def walk_github_tree(self, url: GithubUrl) -> list[str]:
         urls = []
@@ -160,20 +158,8 @@ class Package:
         main_log = logs_path / "main.log"
         main_log.write_text("", encoding="utf-8")
 
-    async def prepare_services(self) -> None:
-        service_path = self.root_path / "services"
-        service_path.mkdir()
-
-        urls = await asyncio.create_task(self.walk_github_tree(self.service_url))
-
-        for url in urls:
-            await asyncio.create_task(self.save_file(url))
-
-    async def prepare_modules(self) -> None:
-        modules_path = self.root_path / "modules"
-        modules_path.mkdir()
-
-        urls = await asyncio.create_task(self.walk_github_tree(self.modules_url))
+    async def prepare_package(self) -> None:
+        urls = await asyncio.create_task(self.walk_github_tree(self.source_path))
 
         for url in urls:
             await asyncio.create_task(self.save_file(url))
