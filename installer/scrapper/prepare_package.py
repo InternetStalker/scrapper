@@ -8,6 +8,7 @@ from shutil import rmtree
 import os
 import sys
 import json
+import shutil
 import aiohttp
 import asyncio
 
@@ -129,7 +130,9 @@ class Package:
         async with self.session.get(url.url) as response:
             src = await response.text()
 
-        Path(self.root_path, *url.path).write_text(src, encoding="utf-8")
+        file_path = Path(self.root_path, *url.path)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(src, encoding="utf-8")
 
 
 
