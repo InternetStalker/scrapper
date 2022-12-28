@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-from pathlib import Path
-from urllib.parse import *
-from bs4 import BeautifulSoup
-from shutil import rmtree
-
 import os
 import sys
 import json
-import aiohttp
 import asyncio
+
+from pathlib import Path
+from shutil import rmtree
+from urllib.parse import urlparse, urlunparse, ParseResult, urljoin
+
+import aiohttp
+
+from bs4 import BeautifulSoup
 
 class GithubUrl:
     def __init__(self, url: str) -> None:
@@ -33,8 +35,8 @@ class GithubUrl:
         return self.__repo
 
     @property
-    def path(self) -> list[str]:
-        return self.__path
+    def path(self) -> Path:
+        return Path(*self.__path[1:])
 
     @property
     def brunch(self) -> str:
@@ -47,8 +49,14 @@ class GithubUrl:
 
         else:
             host = "github.com"
-
-        return urlunparse("https", host, self.author, self.repo, self.brunch, *self.__path)
+        return urlunparse(
+            ("https",
+            host,
+            "/".join((self.author, self.repo, ("tree" if not self.__is_file else ""), self.brunch, *self.__path)),
+            "",
+            "",
+            "")
+            )
 
     def is_file(self) -> bool:
         return self.__is_file
@@ -66,8 +74,7 @@ class GithubUrl:
         if len(parsed_url) > 1:
             return GithubUrl("https://github.com/" + url)
 
-        else:
-            return GithubUrl(self.url, url)
+        return GithubUrl(urljoin(self.url, url))
 
     def __parse_raw_url(self, url: ParseResult) -> None:
         self.__is_file = True
@@ -92,14 +99,22 @@ class GithubUrl:
 class Package:
     "A class that prepares package for unpacking files."
     def __init__(self, root_path: Path, path_to_scrappers: Path) -> None:
-        self.root_path = root_path
-        self.path_to_scrappers = path_to_scrappers
-        self.source_path = "https://github.com/InternetStalker/scrapper/tree/main/scrapper"
+        self.__root_path = root_path
+        self.__path_to_scrappers = path_to_scrappers
+        self.__source_url = GithubUrl("https://github.com/InternetStalker/scrapper/tree/main/scrapper")
 
-    async def walk_github_tree(self, url: GithubUrl) -> list[str]:
+    @property
+    def root_path(self) -> Path:
+        return self.__root_path
+
+    @property
+    def path_to_scrappers(self) -> Path:
+        return self.__path_to_scrappers
+
+    async def walk_github_tree(self, url: GithubUrl, session: aiohttp.ClientSession) -> list[str]:
         urls = []
 
-        async with self.session.get(url.url) as response:
+        async with session.get(url.url) as response:
             src = await response.text()
 
         soup = BeautifulSoup(src, "lxml")
@@ -113,22 +128,26 @@ class Package:
 
             else: # url to folder
                 child_urls = await asyncio.create_task(
-                    self.walk_github_tree(
-                        item_url.url)
+                    self.walk_github_tree
+                        (
+                            item_url,
+                            session
+                        )
                     )
                 urls.extend(child_urls)
 
         return urls
 
-    async def save_file(self, url: GithubUrl) -> None:
+    async def save_file(self, url: GithubUrl, session: aiohttp.ClientSession) -> None:
         """Saves file from github. Checks if url is file. If not raises value error."""
         if not url.is_file():
             raise ValueError("Url argument must be url to file on github.")
 
-        async with self.session.get(url.url) as response:
+        file_path = Path(self.root_path, url.path)
+
+        async with session.get(url.url) as response:
             src = await response.text()
 
-        file_path = Path(self.root_path, *url.path)
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(src, encoding="utf-8")
 
@@ -139,10 +158,10 @@ class Package:
         Calls all the methods starting with prepare.
         Prepare_ method should take no arguments.
         """
-        async with aiohttp.ClientSession() as self.session:
-            for name, method in Package.__dict__.items():
-                if name.startswith("prepare_"):
-                    await asyncio.create_task(method(self))
+        async with aiohttp.ClientSession() as session:
+            await asyncio.create_task(self.prepare_package(session))
+            await asyncio.create_task(self.prepare_webdrivers(session))
+            await asyncio.create_task(self.prepare_scrappers())
 
             await self.create_logs()
 
@@ -158,19 +177,19 @@ class Package:
         main_log = logs_path / "main.log"
         main_log.write_text("", encoding="utf-8")
 
-    async def prepare_package(self) -> None:
-        urls = await asyncio.create_task(self.walk_github_tree(self.source_path))
+    async def prepare_package(self, session: aiohttp.ClientSession) -> None:
+        urls = await asyncio.create_task(self.walk_github_tree(self.__source_url, session))
 
         for url in urls:
-            await asyncio.create_task(self.save_file(url))
+            await asyncio.create_task(self.save_file(url, session))
 
-    async def prepare_webdrivers(self) -> None:
+    async def prepare_webdrivers(self, session) -> None:
         webdrivers_path = self.root_path / "webdrivers"
         webdrivers_path.mkdir()
 
     async def prepare_scrappers(self) -> None:
         if self.path_to_scrappers.exists():
-            if not list(self.path_to_scrappers.iterdir()) == []:
+            if list(self.path_to_scrappers.iterdir()):
                 reply = input("Scrapper dirrectory contains something. Should it be cleaned? [y/n]: ")
                 if reply == "y":
                     rmtree(self.path_to_scrappers)
@@ -184,7 +203,10 @@ class Package:
         os.system("git init")
 
         settings_path = self.root_path / "settings.json"
-        with open(settings_path, "w", encoding="utf-8") as file:
-            settings = json.loads(settings_path.read_text())
-            settings["path to scrappers"] = self.path_to_scrappers
-            json.dump(file, indent=4)
+        st = settings_path.read_text()
+        while st == "":
+            await asyncio.sleep(0.1)
+            st = settings_path.read_text()
+        settings = json.loads(st)
+        settings["path to scrappers"] = str(self.path_to_scrappers)
+        settings_path.write_text(json.dumps(settings, indent=4))
