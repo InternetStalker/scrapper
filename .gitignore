@@ -2,6 +2,5 @@ scrapper.egg-info/
 .vscode/
 build/
 dist/
-venv/
 
 *.pyc
