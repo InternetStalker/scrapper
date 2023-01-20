@@ -1,5 +1,3 @@
-from __future__ import __annotations__
-
 import csv
 import json
 import pathlib

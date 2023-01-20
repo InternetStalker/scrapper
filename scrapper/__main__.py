@@ -1,5 +1,3 @@
-from __future__ import __annotations__
-
 import argparse
 import datetime
 
