@@ -1,6 +1,0 @@
-scrapper.egg-info/
-.vscode/
-build/
-dist/
-
-*.pyc
