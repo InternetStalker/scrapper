@@ -1,0 +1,6 @@
+.vscode/tasks.json
+dist/
+scrapper/
+build/
+installer/
+техническое задание.txt
