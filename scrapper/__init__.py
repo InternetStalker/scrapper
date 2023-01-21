@@ -5,11 +5,11 @@ import typing
 
 
 class SingletonMeta(type):
-    def __init__(self) -> None:
+    def __init__(self, _, __, ___) -> None:
         self.__instance = None
 
     def __call__(self, *args: typing.Any, **kwds: typing.Any) -> typing.Any:
-        if self.__instance is not None:
+        if self.__instance is None:
             self.__instance = super().__call__(*args, **kwds)
 
         return self.__instance
@@ -75,7 +75,8 @@ class System(
 
         csv_reader = csv.DictReader(
             f = frase_table_path.read_text("utf-8").splitlines(),
-            fieldnames = ("Constant", "RU", "EN")
+            fieldnames = ("Constant", "RU", "EN"),
+            escapechar = '"'
             )
         for raw in csv_reader:
             frase_table[raw["Constant"]] = raw[language]

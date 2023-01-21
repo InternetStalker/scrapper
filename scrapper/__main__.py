@@ -147,7 +147,7 @@ def main():
     schadule_subparser.add_argument(
         "frequency",
         choices=("once", "hourly", "daily", "monthly", "onstart"),
-        help=System().phrase_table["SHADULE_FREQUENSY_HELP"]
+        help=System().phrase_table["SCHADULE_FREQUENSY_HELP"]
         )
     schadule_subparser.add_argument(
         "-t",
