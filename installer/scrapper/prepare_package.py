@@ -160,20 +160,6 @@ class Package:
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(src, encoding="utf-8")
 
-
-
-    async def __call__(self) -> None:
-        """
-        Calls all the methods starting with prepare.
-        Prepare_ method should take no arguments.
-        """
-        async with aiohttp.ClientSession() as session:
-            await asyncio.create_task(self.prepare_package(session))
-            await asyncio.create_task(self.prepare_webdrivers(session))
-            await asyncio.create_task(self.prepare_scrappers())
-
-            await self.create_logs()
-
     async def create_logs(self) -> None:
         logs_path = self.root_path / "logs"
         logs_path.mkdir()
