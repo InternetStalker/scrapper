@@ -3,6 +3,7 @@ import pathlib
 import unittest
 
 import aiohttp
+import requests
 from prepare_package import GithubUrl, Package
 
 tmp_path = pathlib.Path("./tmp/")
@@ -81,3 +82,19 @@ class PackageTest(unittest.TestCase):
         assert [url.url for url in asyncio.run(walk())] == [
             GithubUrlTest.blob_url
         ]
+
+    def test_save_file(self):
+        root_path = tmp_path / "package"
+        root_path.mkdir(exist_ok=True, parents=True)
+        scrapper_path = tmp_path / "sc"
+        scrapper_path.mkdir(exist_ok=True, parents=True)
+        package = Package(root_path, scrapper_path)
+        async def save():
+            async with aiohttp.ClientSession() as session:
+                res = await package.walk_github_tree(GithubUrl(GithubUrlTest.blob_url), session)
+                return res
+
+        asyncio.run(save())
+        file_path = root_path / "folder1" / "file2"
+        assert file_path.exists()
+        assert file_path.read_text(encoding="utf-8") == requests.get(GithubUrlTest.raw_url).text
