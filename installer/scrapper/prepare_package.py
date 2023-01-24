@@ -1,21 +1,20 @@
 from __future__ import annotations
 
+import asyncio
+import json
 import os
 import sys
-import json
-import asyncio
-
 from pathlib import Path
 from shutil import rmtree
-from urllib.parse import urlparse, urlunparse, ParseResult, urljoin
+from urllib.parse import ParseResult, urljoin, urlparse, urlunparse
 
 import aiohttp
-
 from bs4 import BeautifulSoup
+
 
 class GithubUrl:
     def __init__(self, url: str) -> None:
-        url = urlparse(url)
+        url: ParseResult = urlparse(url)
 
         if url.netloc == "github.com":
             self.__parse_github_url(url)
@@ -36,7 +35,7 @@ class GithubUrl:
 
     @property
     def path(self) -> Path:
-        return Path(*self.__path[1:])
+        return Path(*self.__path)
 
     @property
     def brunch(self) -> str:
@@ -44,15 +43,24 @@ class GithubUrl:
 
     @property
     def url(self) -> str:
-        if self.__is_file:
-            host = "raw.githubusercontent.com"
-
-        else:
-            host = "github.com"
         return urlunparse(
             ("https",
-            host,
-            "/".join((self.author, self.repo, ("tree" if not self.__is_file else ""), self.brunch, *self.__path)),
+            "github.com",
+            "/".join((self.author, self.repo, ("tree" if not self.__is_file else "blob"), self.brunch, *self.__path)),
+            "",
+            "",
+            "")
+            )
+
+    @property
+    def raw_url(self):
+        if not self.__is_file:
+            raise TypeError("Url isn't a file")
+
+        return urlunparse(
+            ("https",
+            "raw.githubusercontent.com",
+            "/".join((self.author, self.repo, self.brunch, *self.__path)),
             "",
             "",
             "")
@@ -79,7 +87,7 @@ class GithubUrl:
     def __parse_raw_url(self, url: ParseResult) -> None:
         self.__is_file = True
 
-        self.__author, self.__repo, self.__brunch, self.__path = url.path.split("/")[1:]# [1:] because first is always ""
+        self.__author, self.__repo, self.__brunch, *self.__path = url.path.split("/")[1:]# [1:] because first is always ""
 
     def __parse_github_url(self, url: ParseResult) -> None:
         self.__author, self.__repo, *path = url.path.split("/")[1:]
@@ -93,6 +101,7 @@ class GithubUrl:
             self.__brunch, *self.__path = path[1:]# because first is blob or tree
 
         else:
+            self.__is_file = False
             self.__brunch = "main"
             self.__path = []
 
