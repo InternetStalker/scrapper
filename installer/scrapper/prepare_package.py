@@ -212,8 +212,7 @@ class Package:
 
         else:
             self.path_to_scrappers.mkdir()
-        os.system(f"cd {self.path_to_scrappers}")
-        os.system("git init")
+        os.system(f"cd {self.path_to_scrappers} && git init")
 
         settings_path = self.root_path / "settings.json"
         st = settings_path.read_text()
