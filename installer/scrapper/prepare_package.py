@@ -11,6 +11,8 @@ from urllib.parse import ParseResult, urljoin, urlparse, urlunparse
 import aiohttp
 from bs4 import BeautifulSoup
 
+from . import System
+
 
 class GithubUrl:
     def __init__(self, url: str) -> None:
@@ -46,7 +48,15 @@ class GithubUrl:
         return urlunparse(
             ("https",
             "github.com",
-            "/".join((self.author, self.repo, ("tree" if not self.__is_file else "blob"), self.brunch, *self.__path)),
+            "/".join(
+                (
+                    self.author,
+                    self.repo,
+                    "tree" if not self.__is_file else "blob",
+                    self.brunch,
+                    *self.__path
+                    )
+                    ),
             "",
             "",
             "")
@@ -55,12 +65,19 @@ class GithubUrl:
     @property
     def raw_url(self):
         if not self.__is_file:
-            raise TypeError("Url isn't a file")
+            raise TypeError("Url doesn't destinate to a file")
 
         return urlunparse(
             ("https",
             "raw.githubusercontent.com",
-            "/".join((self.author, self.repo, self.brunch, *self.__path)),
+            "/".join(
+                (
+                    self.author,
+                    self.repo,
+                    self.brunch,
+                    *self.__path
+                    )
+                    ),
             "",
             "",
             "")
@@ -71,6 +88,19 @@ class GithubUrl:
 
     def is_folder(self) -> bool:
         return not self.__is_file
+
+    async def save_file(self, session: aiohttp.ClientSession) -> None:
+        """Saves file from github. Checks if url is file. If not raises value error."""
+        if not self.is_file():
+            raise ValueError("Url argument must be url to file on github.")
+
+        file_path = System().package_path / self.path
+
+        async with session.get(self.raw_url) as response:
+            src = await response.text()
+
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(src, encoding="utf-8")
 
     def __truediv__(self, url: str) -> GithubUrl:
         if self.__is_file:
@@ -120,7 +150,7 @@ class Package:
     def path_to_scrappers(self) -> Path:
         return self.__path_to_scrappers
 
-    async def walk_github_tree(self, url: GithubUrl, session: aiohttp.ClientSession) -> list[str]:
+    async def walk_github_tree(self, url: GithubUrl, session: aiohttp.ClientSession) -> list[GithubUrl]:
         urls = []
 
         async with session.get(url.url) as response:
@@ -147,18 +177,6 @@ class Package:
 
         return urls
 
-    async def save_file(self, url: GithubUrl, session: aiohttp.ClientSession) -> None:
-        """Saves file from github. Checks if url is file. If not raises value error."""
-        if not url.is_file():
-            raise ValueError("Url argument must be url to file on github.")
-
-        file_path = Path(self.root_path, url.path)
-
-        async with session.get(url.url) as response:
-            src = await response.text()
-
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(src, encoding="utf-8")
 
     async def create_logs(self) -> None:
         logs_path = self.root_path / "logs"
@@ -176,7 +194,7 @@ class Package:
         urls = await asyncio.create_task(self.walk_github_tree(self.__source_url, session))
 
         for url in urls:
-            await asyncio.create_task(self.save_file(url, session))
+            await asyncio.create_task(url.save_file(session))
 
     async def prepare_webdrivers(self, session) -> None:
         webdrivers_path = self.root_path / "webdrivers"
