@@ -215,10 +215,8 @@ class Package:
         os.system(f"cd {self.path_to_scrappers} && git init")
 
         settings_path = self.root_path / "settings.json"
-        st = settings_path.read_text()
-        while st == "":
+        while settings_path.read_text() == "":
             await asyncio.sleep(0.1)
-            st = settings_path.read_text()
-        settings = json.loads(st)
+        settings = json.loads(settings_path.read_text())
         settings["path to scrappers"] = str(self.path_to_scrappers)
         settings_path.write_text(json.dumps(settings, indent=4))
