@@ -102,6 +102,33 @@ class GithubUrl:
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text(src, encoding="utf-8")
 
+    async def walk_github_tree(self, session: aiohttp.ClientSession) -> list[GithubUrl]:
+        urls = []
+
+        async with session.get(self.url) as response:
+            src = await response.text()
+
+        soup = BeautifulSoup(src, "lxml")
+
+        items = soup.find_all("a", class_="js-navigation-open Link--primary")
+        for item in items:
+            item_url: GithubUrl = self / item.get("href")
+
+            if item_url.is_file(): # it's url to file
+                urls.append(item_url)
+
+            else: # url to folder
+                child_urls = await asyncio.create_task(
+                    self.walk_github_tree
+                        (
+                            item_url,
+                            session
+                        )
+                    )
+                urls.extend(child_urls)
+
+        return urls
+
     def __truediv__(self, url: str) -> GithubUrl:
         if self.__is_file:
             raise Exception("Can't join to file url.")
@@ -150,34 +177,6 @@ class Package:
     def path_to_scrappers(self) -> Path:
         return self.__path_to_scrappers
 
-    async def walk_github_tree(self, url: GithubUrl, session: aiohttp.ClientSession) -> list[GithubUrl]:
-        urls = []
-
-        async with session.get(url.url) as response:
-            src = await response.text()
-
-        soup = BeautifulSoup(src, "lxml")
-
-        items = soup.find_all("a", class_="js-navigation-open Link--primary")
-        for item in items:
-            item_url: GithubUrl = url / item.get("href")
-
-            if item_url.is_file(): # it's url to file
-                urls.append(item_url)
-
-            else: # url to folder
-                child_urls = await asyncio.create_task(
-                    self.walk_github_tree
-                        (
-                            item_url,
-                            session
-                        )
-                    )
-                urls.extend(child_urls)
-
-        return urls
-
-
     async def create_logs(self) -> None:
         logs_path = self.root_path / "logs"
         logs_path.mkdir()
@@ -191,7 +190,7 @@ class Package:
         main_log.write_text("", encoding="utf-8")
 
     async def prepare_package(self, session: aiohttp.ClientSession) -> None:
-        urls = await asyncio.create_task(self.walk_github_tree(self.__source_url, session))
+        urls = await asyncio.create_task(self.__source_url.walk_github_tree(session))
 
         for url in urls:
             await asyncio.create_task(url.save_file(session))
