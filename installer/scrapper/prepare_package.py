@@ -164,23 +164,23 @@ class GithubUrl:
 
 class Package:
     "A class that prepares package for unpacking files."
-    def __init__(self, root_path: Path, path_to_scrappers: Path) -> None:
-        self.__root_path = root_path
+    def __init__(self, package_path: Path, path_to_scrappers: Path) -> None:
+        self.__package_path = package_path
         self.__path_to_scrappers = path_to_scrappers
         self.__source_url = GithubUrl("https://github.com/InternetStalker/scrapper/tree/main/scrapper")
 
     @property
-    def root_path(self) -> Path:
-        return self.__root_path
+    def package_path(self) -> Path:
+        return self.__package_path
 
     @property
     def path_to_scrappers(self) -> Path:
         return self.__path_to_scrappers
 
     async def create_logs(self) -> None:
-        logs_path = self.root_path / "logs"
+        logs_path = self.package_path / "logs"
         logs_path.mkdir()
-        service_path = self.root_path / "services"
+        service_path = self.package_path / "services"
 
         for service in service_path.iterdir():
             if not service == "__init__.py":
@@ -196,7 +196,7 @@ class Package:
             await asyncio.create_task(url.save_file(session))
 
     async def prepare_webdrivers(self, session) -> None:
-        webdrivers_path = self.root_path / "webdrivers"
+        webdrivers_path = self.package_path / "webdrivers"
         webdrivers_path.mkdir()
 
     async def prepare_scrappers(self) -> None:
@@ -213,7 +213,7 @@ class Package:
             self.path_to_scrappers.mkdir()
         os.system(f"cd {self.path_to_scrappers} && git init")
 
-        settings_path = self.root_path / "settings.json"
+        settings_path = self.package_path / "settings.json"
         while settings_path.read_text() == "":
             await asyncio.sleep(0.1)
         settings = json.loads(settings_path.read_text())
