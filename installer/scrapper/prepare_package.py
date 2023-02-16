@@ -11,6 +11,7 @@ import aiohttp
 
 from . import System
 from .url import GithubUrl
+from .webdrivers import ChromeWebdriver
 
 
 class Package:
@@ -49,6 +50,8 @@ class Package:
     async def prepare_webdrivers(self, session: aiohttp.ClientSession) -> None:
         webdrivers_path = self.package_path / "webdrivers"
         webdrivers_path.mkdir()
+
+        await asyncio.create_task(ChromeWebdriver().install(session, webdrivers_path))
 
     async def prepare_scrappers(self) -> None:
         if self.path_to_scrappers.exists():

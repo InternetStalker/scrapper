@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 from abc import ABC, abstractmethod, abstractproperty
 
 import aiohttp
@@ -65,7 +66,7 @@ class BaseWebdriver(AbstractWebdriver, metaclass=SingletonMeta):
         return super().install(session)
 
 class ChromeWebdriver(BaseWebdriver, metaclass=SingletonMeta):
-    async def install(self, session: aiohttp.ClientSession) -> None:
+    async def install(self, session: aiohttp.ClientSession, install_path: pathlib.Path) -> None:
         async with session.get("https://chromedriver.chromium.org/downloads") as response:
             soup = BeautifulSoup(response.text(), "lxml")
 
@@ -73,6 +74,8 @@ class ChromeWebdriver(BaseWebdriver, metaclass=SingletonMeta):
 
             versions = []
             for para in page.children:
+                para: Tag
+
                 if para.find("a") is not None:
                     url = para.find("a").get("href")
 
@@ -95,10 +98,13 @@ class ChromeWebdriver(BaseWebdriver, metaclass=SingletonMeta):
                     async with session.get(url) as response:
                         soup = BeautifulSoup(response.text())
                         if os.name == "nt":
-                            soup.find("a")
+                            save_url = soup.find("a", text="chromedriver_win32.zip")
 
-                        elif os.name == "":
-                            pass
+                        elif os.name == "posix":
+                            save_url = soup.find("a", text="chromedriver_linux64.zip")
+
+                    async with session.get(save_url) as response:
+                        install_path.write_bytes(response.content)
 
 
 
