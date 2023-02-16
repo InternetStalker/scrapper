@@ -1,2 +1,3 @@
 Constant,RU,EN
 SCRAPPERS_PATH,Введите путь к папке"," где будут храниться парсеры: ,Enter the path to folder where your scrappers will be:
+CRAPPER_CONTAINS,Папка для парсеров что-то содержит. Очистить? [y/n],Scrapper dirrectory contains something. Should it be cleaned? [y/n]:
