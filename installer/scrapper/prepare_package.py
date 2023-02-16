@@ -41,6 +41,12 @@ class Package:
         main_log = logs_path / "main.log"
         main_log.write_text("", encoding="utf-8")
 
+    async def prepare_files(self, session: aiohttp.ClientSession) -> None:
+        urls = await asyncio.create_task(self.__source_url.walk_github_tree(session))
+
+        for url in urls:
+            await asyncio.create_task(url.save_file(session))
+
     async def prepare_webdrivers(self, session: aiohttp.ClientSession) -> None:
         webdrivers_path = self.package_path / "webdrivers"
         webdrivers_path.mkdir()
@@ -72,7 +78,7 @@ class Package:
         "Manages all the logic of preparing"
 
         async with aiohttp.ClientSession() as session:
-            await asyncio.create_task(self.prepare_package(session))
+            await asyncio.create_task(self.prepare_files(session))
             await asyncio.create_task(self.prepare_webdrivers(session))
             await asyncio.create_task(self.prepare_scrappers())
 
