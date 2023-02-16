@@ -70,9 +70,10 @@ class Package:
 
     async def prepare_package(self):
         "Manages all the logic of preparing"
-        self.create_logs()
 
         async with aiohttp.ClientSession() as session:
             await asyncio.create_task(self.prepare_package(session))
             await asyncio.create_task(self.prepare_webdrivers(session))
             await asyncio.create_task(self.prepare_scrappers())
+
+        self.create_logs()
