@@ -2,6 +2,7 @@ import asyncio
 import pathlib
 
 import aiohttp
+import requests
 
 from ..scrapper.url import GithubUrl
 
@@ -61,3 +62,13 @@ def test_walk_github_tree():
     assert {url.url for url in asyncio.run(walk())} == {
         blob_url
     }
+
+
+async def test_save_file(tmp_path: pathlib.Path):
+    root_path = tmp_path / "package"
+    root_path.mkdir(exist_ok=True, parents=True)
+    async with aiohttp.ClientSession() as session:
+        await GithubUrl(blob_url).save_file(session)
+    file_path = root_path / "folder1" / "file2"
+    assert file_path.exists()
+    assert file_path.read_text(encoding="utf-8") == requests.get(raw_url).text
