@@ -7,8 +7,6 @@ from abc import ABC, abstractmethod, abstractproperty
 import aiohttp
 from bs4 import BeautifulSoup, Tag
 
-from . import SingletonMeta
-
 
 class AbstractBrowser(ABC):
     @abstractproperty
@@ -17,7 +15,7 @@ class AbstractBrowser(ABC):
 
     @abstractproperty
     def version(self) -> str:
-        "Version of installed browser"
+        "Version of the installed browser"
 
 class BaseBrowser(AbstractBrowser):
     def __init__(self) -> None:
@@ -26,6 +24,7 @@ class BaseBrowser(AbstractBrowser):
 
     @property
     def version(self) -> str:
+        "Version of the installed browser"
         return self._version
 
     def _get_version(self) -> str:
@@ -38,6 +37,7 @@ class BaseBrowser(AbstractBrowser):
 class ChromeBrowser(BaseBrowser):
     @property
     def is_installed(self) -> bool:
+        "Return if the browser is installed"
         return super().is_installed
 
     def _get_version(self) -> str:
@@ -52,6 +52,7 @@ class ChromeBrowser(BaseBrowser):
 class FirefoxBrowser(BaseBrowser):
     @property
     def is_installed(self) -> bool:
+        "Return if the browser is installed"
         return super().is_installed
 
     def _get_version(self) -> str:
@@ -71,10 +72,12 @@ class AbstractWebdriver(ABC):
 
 class BaseWebdriver(AbstractWebdriver):
     async def install(self, session: aiohttp.ClientSession) -> None:
+        "Install the webdriver"
         return super().install(session)
 
 class ChromeWebdriver(BaseWebdriver):
-    async def install(self, session: aiohttp.ClientSession, install_path: pathlib.Path) -> None:
+    async def install(self, session: aiohttp.ClientSession, install_path: pathlib.Path, version: str) -> None:
+        "Install the webdriver"
         async with session.get("https://chromedriver.chromium.org/downloads") as response:
             soup = BeautifulSoup(response.text(), "lxml")
 
@@ -102,7 +105,7 @@ class ChromeWebdriver(BaseWebdriver):
                         )
 
             for url, version in versions:
-                if version == ChromeBrowser().version:
+                if version == version:
                     async with session.get(url) as response:
                         soup = BeautifulSoup(response.text())
                         if os.name == "nt":
@@ -119,6 +122,7 @@ class ChromeWebdriver(BaseWebdriver):
 
 class FirefoxWebdriver(BaseWebdriver):
     async def install(self, session: aiohttp.ClientSession) -> None:
+        "Install the webdriver"
         return super().install()
 
 
