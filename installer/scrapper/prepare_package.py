@@ -23,13 +23,16 @@ class Package:
 
     @property
     def package_path(self) -> pathlib.Path:
+        "Path where package is installed"
         return self.__package_path
 
     @property
     def path_to_scrappers(self) -> pathlib.Path:
+        "Path to the folder where scrappers are"
         return self.__path_to_scrappers
 
     def create_logs(self) -> None:
+        "Create logs"
         logs_path = self.package_path / "logs"
         logs_path.mkdir()
         service_path = self.package_path / "services"
@@ -42,18 +45,21 @@ class Package:
         main_log.write_text("", encoding="utf-8")
 
     async def prepare_files(self, session: aiohttp.ClientSession) -> None:
+        "Download files from the Github"
         urls = await asyncio.create_task(self.__source_url.walk_github_tree(session))
 
         for url in urls:
             await asyncio.create_task(url.save_file(session))
 
     async def prepare_webdrivers(self, session: aiohttp.ClientSession) -> None:
+        "Download webdrivers"
         webdrivers_path = self.package_path / "webdrivers"
         webdrivers_path.mkdir()
 
         await asyncio.create_task(ChromeWebdriver().install(session, webdrivers_path))
 
     async def prepare_scrappers(self) -> None:
+        "Creates place for scrappers"
         if self.path_to_scrappers.exists():
             if list(self.path_to_scrappers.iterdir()):
                 reply = input(System().phrase_table["CRAPPER_CONTAINS"])
@@ -75,7 +81,7 @@ class Package:
         settings_path.write_text(json.dumps(settings, indent=4))
 
     async def prepare_package(self):
-        "Manages all the logic of preparing"
+        "Manages all the installing logic"
 
         async with aiohttp.ClientSession() as session:
             await asyncio.create_task(self.prepare_files(session))
