@@ -1,62 +1,23 @@
-[build-system]
-requires = ["setuptools>=42"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "scrapper"
 version = "0.0.1"
 description = ""
-authors = [
-    {name = "InternetStalker", email = "internetstalcker@yandex.ru"},
-]
-maintainers = [
-    {name = "InternetStalker", email = "internetstalcker@yandex.ru"}
-]
+authors = ["InternetStalker <internetstalcker@yandex.ru>"]
+license = "MIT"
 readme = "README.md"
-#requires-python = ">=3.10"
-keywords = [
-    "web-scrapping",
-    ""
-]
-license = {file = "LICENSE"}
-classifiers = [
-    "Development Status :: 1 - Planning",
 
-    "Environment :: Console",
-
-    "Natural Language :: Russian",
-
-    "License :: OSI Approved :: MIT License",
-
-    "Operating System :: Microsoft :: Windows",
-    "Operating System :: POSIX :: Linux",
-
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Software Development :: Code Generators",
-    "Topic :: Software Development :: Version Control",
-    "Topic :: Software Development :: Testing :: Unit",
-    "Topic :: Software Development :: Build Tools",
-    "Topic :: Internet :: WWW/HTTP",
-    "Topic :: Utilities",
-
-    "Programming Language :: Python :: 3",
-]
-dependencies = [
-]
-
-[tool.setuptools]
-package-dir = {"" = "installer"}
-packages = [
-    "scrapper"
-]
+[tool.poetry.dependencies]
+python = "^3.7"
+aiohttp = "^3.8.4"
+bs4 = "^0.0.1"
 
 
-[project.urls]
-homepage = "https://github.com/InternetStalker/scrapper"
-documentation = "https://github.com/InternetStalker/scrapper/blob/main/README.md"
-repository = "https://github.com/InternetStalker/scrapper"
-changelog = "https://github.com/InternetStalker/scrapper/blob/main/CHANGELOG.md"
+[tool.poetry.group.develop.dependencies]
+pytest = "^7.2.1"
 
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.pylint.main]
 analyse-fallback-blocks = true
