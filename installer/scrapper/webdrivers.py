@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import platform
 from abc import ABC, abstractmethod, abstractproperty
 
 import aiohttp
@@ -116,9 +117,20 @@ class ChromeWebdriver(BaseWebdriver):
 
 
 class FirefoxWebdriver(BaseWebdriver):
-    async def install(self, session: aiohttp.ClientSession) -> None:
+    async def install(self, session: aiohttp.ClientSession, install_path: pathlib.Path) -> None:
         "Install the webdriver"
-        return super().install()
+        async with session.get("https://github.com/mozilla/geckodriver/releases/latest") as response:
+            if os.name == "unix":
+                pass
+
+            elif os.name == "nt":
+                bit_arch = platform.architecture()[0]
+                soup = BeautifulSoup(response.text(), "lxml")
+                links = soup.find_all("li", class_="Box-row d-flex flex-column flex-md-row")
+                for link in links:
+                    if pathlib.Path(link.find("a").text).stem.endswith(f"win{bit_arch[:2]}"):
+                        async with session.get("https://github.com" + link.find("a").get("href")) as response:
+                            install_path.write_bytes(response.content)
 
 
 WEBDRIVERS = (ChromeWebdriver())
