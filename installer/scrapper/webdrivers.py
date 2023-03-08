@@ -23,6 +23,11 @@ class BaseBrowser(AbstractBrowser):
         self._version = self._get_version()
 
     @property
+    def is_installed(self) -> bool:
+        "Return if the browser is installed"
+        return self.is_installed
+
+    @property
     def version(self) -> str:
         "Version of the installed browser"
         return self._version
@@ -35,11 +40,6 @@ class BaseBrowser(AbstractBrowser):
 
 
 class ChromeBrowser(BaseBrowser):
-    @property
-    def is_installed(self) -> bool:
-        "Return if the browser is installed"
-        return super().is_installed
-
     def _get_version(self) -> str:
         return super()._get_version()
 
@@ -50,11 +50,6 @@ class ChromeBrowser(BaseBrowser):
         pass
 
 class FirefoxBrowser(BaseBrowser):
-    @property
-    def is_installed(self) -> bool:
-        "Return if the browser is installed"
-        return super().is_installed
-
     def _get_version(self) -> str:
         return super()._get_version()
 
