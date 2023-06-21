@@ -29,4 +29,4 @@ TEST_HELP,Тестирует разрабатываемую версию пар�
 TEST_NAME_HELP,Название парсера,Scrapper's name
 RELEASE_HELP,Переводит текущее состояние парсера в релиз,Changes current developing scrapper's state to release
 RELEASE_NAME_HELP,Название парсера,Scrapper's name
-RELEASE_RELEASE_HELP,Номер релиза,Number of release
+RELEASE_VERSION_HELP,Версия релиза,Version of release
