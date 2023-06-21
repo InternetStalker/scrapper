@@ -183,8 +183,8 @@ def main():
         help=System().phrase_table["RELEASE_NAME_HELP"]
         )
     release_subparser.add_argument(
-        "release",
-        help=System().phrase_table["RELEASE_RELEASE_HELP"]
+        "version",
+        help=System().phrase_table["RELEASE_VERSION_HELP"]
         )
 
 
