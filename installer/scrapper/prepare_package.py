@@ -18,33 +18,33 @@ class GithubUrl:
         url = urlparse(url)
 
         if url.netloc == "github.com":
-            self.__parse_github_url(url)
+            self._parse_github_url(url)
 
         elif url.netloc == "raw.githubusercontent.com":
-            self.__parse_raw_url(url)
+            self._parse_raw_url(url)
 
         else:
             raise Exception(f"Invalid host: {url.netloc}")
 
     @property
     def author(self) -> str:
-        return self.__author
+        return self._author
 
     @property
     def repo(self) -> str:
-        return self.__repo
+        return self._repo
 
     @property
     def path(self) -> Path:
-        return Path(*self.__path[1:])
+        return Path(*self._path[1:])
 
     @property
     def brunch(self) -> str:
-        return self.__brunch
+        return self._brunch
 
     @property
     def url(self) -> str:
-        if self.__is_file:
+        if self._is_file:
             host = "raw.githubusercontent.com"
 
         else:
@@ -52,20 +52,20 @@ class GithubUrl:
         return urlunparse(
             ("https",
             host,
-            "/".join((self.author, self.repo, ("tree" if not self.__is_file else ""), self.brunch, *self.__path)),
+            "/".join((self.author, self.repo, ("tree" if not self._is_file else ""), self.brunch, *self._path)),
             "",
             "",
             "")
             )
 
     def is_file(self) -> bool:
-        return self.__is_file
+        return self._is_file
 
     def is_folder(self) -> bool:
-        return not self.__is_file
+        return not self._is_file
 
     def __truediv__(self, url: str) -> GithubUrl:
-        if self.__is_file:
+        if self._is_file:
             raise Exception("Can't join to file url.")
 
         url = url.lstrip("/")
@@ -76,40 +76,40 @@ class GithubUrl:
 
         return GithubUrl(urljoin(self.url, url))
 
-    def __parse_raw_url(self, url: ParseResult) -> None:
+    def _parse_raw_url(self, url: ParseResult) -> None:
         self.__is_file = True
 
-        self.__author, self.__repo, self.__brunch, self.__path = url.path.split("/")[1:]# [1:] because first is always ""
+        self._author, self._repo, self._brunch, *self._path = url.path.split("/")[1:]# [1:] because first is always ""
 
-    def __parse_github_url(self, url: ParseResult) -> None:
-        self.__author, self.__repo, *path = url.path.split("/")[1:]
+    def _parse_github_url(self, url: ParseResult) -> None:
+        self._author, self._repo, *path = url.path.split("/")[1:]
         if len(path) > 0:
             if path[0] == "blob":
-                self.__is_file = True
+                self._is_file = True
 
             else:
-                self.__is_file = False
+                self._is_file = False
 
-            self.__brunch, *self.__path = path[1:]# because first is blob or tree
+            self._brunch, *self._path = path[1:]# because first is blob or tree
 
         else:
-            self.__brunch = "main"
-            self.__path = []
+            self._brunch = "main"
+            self._path = []
 
 class Package:
     "A class that prepares package for unpacking files."
     def __init__(self, root_path: Path, path_to_scrappers: Path) -> None:
-        self.__root_path = root_path
-        self.__path_to_scrappers = path_to_scrappers
-        self.__source_url = GithubUrl("https://github.com/InternetStalker/scrapper/tree/main/scrapper")
+        self._root_path = root_path
+        self._path_to_scrappers = path_to_scrappers
+        self._source_url = GithubUrl("https://github.com/InternetStalker/scrapper/tree/main/scrapper")
 
     @property
     def root_path(self) -> Path:
-        return self.__root_path
+        return self._root_path
 
     @property
     def path_to_scrappers(self) -> Path:
-        return self.__path_to_scrappers
+        return self._path_to_scrappers
 
     async def walk_github_tree(self, url: GithubUrl, session: aiohttp.ClientSession) -> list[str]:
         urls = []
