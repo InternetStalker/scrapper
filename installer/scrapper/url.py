@@ -51,7 +51,7 @@ class GithubUrl:
                     self.repo,
                     "tree" if not self.is_file else "blob",
                     self.brunch,
-                    *self._path
+                    *self.path
                     )
                     ),
             "",
@@ -91,7 +91,7 @@ class GithubUrl:
 
 
     async def save_file(self, session: aiohttp.ClientSession) -> None:
-        """Saves file from github. Checks if url is file. If not raises value error."""
+        """Saves file from github. If url is not a file, raises value error."""
         if not self.is_file:
             raise ValueError("Url argument must be url to file on github.")
 
