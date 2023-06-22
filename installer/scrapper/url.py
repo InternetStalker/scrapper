@@ -104,6 +104,7 @@ class GithubUrl:
         file_path.write_text(src, encoding="utf-8")
 
     async def walk_github_tree(self, session: aiohttp.ClientSession) -> set[GithubUrl]:
+    "Walks up through Github file tree and returns url of all found files"
         if  self.is_file:
             raise TypeError("Url should be a folder not a file")
 
