@@ -16,29 +16,29 @@ class GithubUrl:
         url: ParseResult = urlparse(url)
 
         if url.netloc == "github.com":
-            self.__parse_github_url(url)
+            self._parse_github_url(url)
 
         elif url.netloc == "raw.githubusercontent.com":
-            self.__parse_raw_url(url)
+            self._parse_raw_url(url)
 
         else:
             raise Exception(f"Invalid host: {url.netloc}")
 
     @property
     def author(self) -> str:
-        return self.__author
+        return self._author
 
     @property
     def repo(self) -> str:
-        return self.__repo
+        return self._repo
 
     @property
     def path(self) -> pathlib.Path:
-        return pathlib.Path(*self.__path)
+        return pathlib.Path(*self._path)
 
     @property
     def brunch(self) -> str:
-        return self.__brunch
+        return self._brunch
 
     @property
     def url(self) -> str:
@@ -51,7 +51,7 @@ class GithubUrl:
                     self.repo,
                     "tree" if not self.__is_file else "blob",
                     self.brunch,
-                    *self.__path
+                    *self._path
                     )
                     ),
             "",
@@ -61,7 +61,7 @@ class GithubUrl:
 
     @property
     def raw_url(self):
-        if not self.__is_file:
+        if not self._is_file:
             raise TypeError("Url doesn't destinate to a file")
 
         return urlunparse(
@@ -81,10 +81,10 @@ class GithubUrl:
             )
 
     def is_file(self) -> bool:
-        return self.__is_file
+        return self._is_file
 
     def is_folder(self) -> bool:
-        return not self.__is_file
+        return not self._is_file
 
     async def save_file(self, session: aiohttp.ClientSession) -> None:
         """Saves file from github. Checks if url is file. If not raises value error."""
@@ -130,7 +130,7 @@ class GithubUrl:
         return urls
 
     def __truediv__(self, url: str) -> GithubUrl:
-        if self.__is_file:
+        if self.is_file():
             raise Exception("Can't join to file url.")
 
         url = url.lstrip("/")
@@ -141,23 +141,23 @@ class GithubUrl:
 
         return GithubUrl(urljoin(self.url, url))
 
-    def __parse_raw_url(self, url: ParseResult) -> None:
-        self.__is_file = True
+    def _parse_raw_url(self, url: ParseResult) -> None:
+        self._is_file = True
 
-        self.__author, self.__repo, self.__brunch, *self.__path = url.path.split("/")[1:]# [1:] because first is always ""
+        self._author, self._repo, self._brunch, *self._path = url.path.split("/")[1:]# [1:] because first is always ""
 
-    def __parse_github_url(self, url: ParseResult) -> None:
-        self.__author, self.__repo, *path = url.path.split("/")[1:]
+    def _parse_github_url(self, url: ParseResult) -> None:
+        self._author, self._repo, *path = url.path.split("/")[1:]
         if len(path) > 0:
             if path[0] == "blob":
-                self.__is_file = True
+                self._is_file = True
 
             else:
-                self.__is_file = False
+                self._is_file = False
 
-            self.__brunch, *self.__path = path[1:]# because first is blob or tree
+            self._brunch, *self._path = path[1:]# because first is blob or tree
 
         else:
-            self.__is_file = False
-            self.__brunch = "main"
-            self.__path = []
+            self._is_file = False
+            self._brunch = "main"
+            self._path = []
