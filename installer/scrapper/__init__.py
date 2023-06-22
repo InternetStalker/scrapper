@@ -5,13 +5,13 @@ import typing
 
 class SingletonMeta(type):
     def __init__(self, _, __, ___) -> None:
-        self.__instance = None
+        self._instance = None
 
     def __call__(self, *args: typing.Any, **kwds: typing.Any) -> typing.Any:
-        if self.__instance is None:
-            self.__instance = super().__call__(*args, **kwds)
+        if self._instance is None:
+            self._instance = super().__call__(*args, **kwds)
 
-        return self.__instance
+        return self._instance
 
 
 class System(
@@ -22,18 +22,18 @@ class System(
         if language not in ("RU", "EN"):
             raise Exception(f"Unexpected language: {language}")
 
-        self.__package_path = pathlib.Path(__file__).parent
-        self.__phrase_table = self.__create_frase_table(language)
+        self._package_path = pathlib.Path(__file__).parent
+        self._phrase_table = self._create_frase_table(language)
 
     @property
     def package_path(self) -> pathlib.Path:
-        return self.__package_path
+        return self._package_path
 
     @property
     def phrase_table(self) -> dict:
-        return self.__phrase_table
+        return self._phrase_table
 
-    def __create_frase_table(self, language: str) -> dict:
+    def _create_frase_table(self, language: str) -> dict:
         frase_table_path = self.__package_path / "frase_table.csv"
         frase_table = {}
 
