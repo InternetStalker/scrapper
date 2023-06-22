@@ -49,7 +49,7 @@ class GithubUrl:
                 (
                     self.author,
                     self.repo,
-                    "tree" if not self.__is_file else "blob",
+                    "tree" if not self.is_file else "blob",
                     self.brunch,
                     *self._path
                     )
@@ -60,8 +60,16 @@ class GithubUrl:
             )
 
     @property
+    def is_file(self) -> bool:
+        return self._is_file
+
+    @property
+    def is_folder(self) -> bool:
+        return not self._is_file
+
+    @property
     def raw_url(self):
-        if not self._is_file:
+        if not self.is_file:
             raise TypeError("Url doesn't destinate to a file")
 
         return urlunparse(
@@ -72,7 +80,7 @@ class GithubUrl:
                     self.author,
                     self.repo,
                     self.brunch,
-                    *self.__path
+                    *self.path
                     )
                     ),
             "",
@@ -80,15 +88,11 @@ class GithubUrl:
             "")
             )
 
-    def is_file(self) -> bool:
-        return self._is_file
 
-    def is_folder(self) -> bool:
-        return not self._is_file
 
     async def save_file(self, session: aiohttp.ClientSession) -> None:
         """Saves file from github. Checks if url is file. If not raises value error."""
-        if not self.is_file():
+        if not self.is_file:
             raise ValueError("Url argument must be url to file on github.")
 
         file_path = System().package_path / self.path
@@ -100,7 +104,7 @@ class GithubUrl:
         file_path.write_text(src, encoding="utf-8")
 
     async def walk_github_tree(self, session: aiohttp.ClientSession) -> set[GithubUrl]:
-        if  self.is_file():
+        if  self.is_file:
             raise TypeError("Url should be a folder not a file")
 
         urls = set()
@@ -130,7 +134,7 @@ class GithubUrl:
         return urls
 
     def __truediv__(self, url: str) -> GithubUrl:
-        if self.is_file():
+        if self.is_file:
             raise Exception("Can't join to file url.")
 
         url = url.lstrip("/")
