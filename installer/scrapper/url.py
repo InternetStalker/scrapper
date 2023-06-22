@@ -153,13 +153,13 @@ class GithubUrl:
     def _parse_github_url(self, url: ParseResult) -> None:
         self._author, self._repo, *path = url.path.split("/")[1:]
         if len(path) > 0:
-            if path[0] == "blob":
+            if path.pop(0) == "blob":
                 self._is_file = True
 
             else:
                 self._is_file = False
 
-            self._brunch, *self._path = path[1:]# because first is blob or tree
+            self._brunch, *self._path = path# because first is blob or tree
 
         else:
             self._is_file = False
