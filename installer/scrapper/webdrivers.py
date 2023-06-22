@@ -132,6 +132,9 @@ class FirefoxWebdriver(BaseWebdriver):
                         async with session.get("https://github.com" + link.find("a").get("href")) as response:
                             install_path.write_bytes(response.content)
 
+class Webdrivers(Enum, BaseWebdriver):
+    ChromeWebdriver = ChromeWebdriver()
 
-WEBDRIVERS = (ChromeWebdriver())
-BROWSERS = (ChromeBrowser())
+class Browsers(Enum, BaseBrowser):
+    ChromeBrowser = ChromeBrowser ()
+
