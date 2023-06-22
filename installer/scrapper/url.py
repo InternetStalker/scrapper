@@ -11,6 +11,7 @@ from . import System
 
 
 class GithubUrl:
+    "A class that provides the interface for working with Github"
     def __init__(self, url: str) -> None:
         url: ParseResult = urlparse(url)
 
