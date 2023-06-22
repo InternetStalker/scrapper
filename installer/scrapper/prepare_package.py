@@ -17,19 +17,19 @@ from .webdrivers import ChromeWebdriver
 class Package:
     "A class that prepares package for unpacking files."
     def __init__(self, package_path: pathlib.Path, path_to_scrappers: pathlib.Path) -> None:
-        self.__package_path = package_path
-        self.__path_to_scrappers = path_to_scrappers
-        self.__source_url = GithubUrl("https://github.com/InternetStalker/scrapper/tree/main/scrapper")
+        self._package_path = package_path
+        self._path_to_scrappers = path_to_scrappers
+        self._source_url = GithubUrl("https://github.com/InternetStalker/scrapper/tree/main/scrapper")
 
     @property
     def package_path(self) -> pathlib.Path:
         "Path where package is installed"
-        return self.__package_path
+        return self._package_path
 
     @property
     def path_to_scrappers(self) -> pathlib.Path:
         "Path to the folder where scrappers are"
-        return self.__path_to_scrappers
+        return self._path_to_scrappers
 
     def create_logs(self) -> None:
         "Create logs"
@@ -46,7 +46,7 @@ class Package:
 
     async def prepare_files(self, session: aiohttp.ClientSession) -> None:
         "Download files from the Github"
-        urls = await asyncio.create_task(self.__source_url.walk_github_tree(session))
+        urls = await asyncio.create_task(self._source_url.walk_github_tree(session))
 
         for url in urls:
             await asyncio.create_task(url.save_file(session))
